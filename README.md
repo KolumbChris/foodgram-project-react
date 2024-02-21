@@ -183,8 +183,6 @@ sudo docker compose -f docker-compose.production.yml -p foodgram exec backend py
 }
 ```
 
-## Автор
-[Дмитрий М.](https://github.com/dimarchenkov/foodgram-project-react)
 
 ## Пример
 Пример сайта доступен по адресу:
