@@ -1,42 +1,65 @@
+"""
+Настойки админ панели django для модели Рецептов.
+"""
 from django.contrib import admin
-from django.contrib.admin import display
 
-from .models import (Favourite, Ingredient, IngredientInRecipe, Recipe,
-                     ShoppingCart, Tag)
+from .models import (
+    Ingredient,
+    FavoriteRecipe,
+    RecipeIngredient,
+    Recipe,
+    Tag,
+    ShoppingCart
+)
+
+
+class IngredientInline(admin.StackedInline):
+    model = RecipeIngredient
+    extra = 1
+    min_num = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'id', 'author', 'added_in_favorites')
-    readonly_fields = ('added_in_favorites',)
-    list_filter = ('author', 'name', 'tags',)
-
-    @display(description='Количество в избранных')
-    def added_in_favorites(self, obj):
-        return obj.favorites.count()
+    list_display = (
+        'id',
+        'name',
+        'author',
+        'pub_date',
+    )
+    list_filter = (
+        'author',
+        'name',
+        'tags',
+    )
+    inlines = [IngredientInline]
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('name', 'measurement_unit',)
-    list_filter = ('name',)
+    list_display = ('name', 'measurement_unit')
+    list_filter = ('measurement_unit',)
+    search_fields = ('name',)
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'color', 'slug',)
+    list_display = ('name', 'color', 'slug')
+    list_filter = ('name', 'color')
+    search_fields = ('name',)
 
 
 @admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recipe',)
+class ShoppingListAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe')
+    search_fields = ('user',)
+    empty_value_display = '-пусто-'
 
 
-@admin.register(Favourite)
-class FavouriteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recipe',)
-
-
-@admin.register(IngredientInRecipe)
-class IngredientInRecipe(admin.ModelAdmin):
-    list_display = ('recipe', 'ingredient', 'amount',)
+@admin.register(FavoriteRecipe)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe')
+    search_fields = ('user',)
+    empty_value_display = '-пусто-'
