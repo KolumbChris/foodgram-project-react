@@ -84,7 +84,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    image: dmitriy1223/foodgram_backend
+    image: ****/foodgram_backend
     depends_on:
       - db
     env_file: .env.example
@@ -92,7 +92,7 @@ services:
       - static:/static_backend
       - media:/media_files
   nginx:
-    image: dmitriy1223/foodgram_gateway
+    image: ****/foodgram_gateway
     ports:
       - "9000:80"
     volumes:
