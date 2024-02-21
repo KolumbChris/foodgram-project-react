@@ -20,7 +20,6 @@ services:
 
   backend:
     container_name: foodgram-app
-    # image: xewus/foodgram_back:latest
     build: ../backend
     restart: always
     volumes:
