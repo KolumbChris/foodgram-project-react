@@ -104,6 +104,8 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv/
+.env/
 env/
 venv/
 ENV/
@@ -130,13 +132,7 @@ dmypy.json
 
 # .idea
 .idea
+.vscode
 
-# js React
-frontend/build/
-frontend/node_modules/
-
-# VS Code
-.vscode/
-
-# Media
-backend/ media/
+static/
+media/

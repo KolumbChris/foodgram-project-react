@@ -1,24 +1,29 @@
-"""
-Модуль настройки URL для API.
-"""
-
+from api.views import (
+    BaseAPIRootView,
+    IngredientViewSet,
+    RecipeViewSet,
+    TagViewSet,
+    UserViewSet,
+)
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (CustomUserViewSet, IngredientViewSet, RecipeViewSet,
-                    TagViewSet)
+app_name = "api"
 
-app_name = 'api'
 
-v1_router = DefaultRouter()
+class RuDefaultRouter(DefaultRouter):
+    """Показывает описание главной страницы API на русском языке."""
 
-v1_router.register('tags', TagViewSet)
-v1_router.register('ingredients', IngredientViewSet)
-v1_router.register('recipes', RecipeViewSet)
-v1_router.register('users', CustomUserViewSet)
+    APIRootView = BaseAPIRootView
 
-urlpatterns = [
-    path('', include(v1_router.urls)),
-    path('auth/', include('djoser.urls.authtoken')),
-    path('auth/', include('djoser.urls')),
-]
+
+router = RuDefaultRouter()
+router.register("tags", TagViewSet, "tags")
+router.register("ingredients", IngredientViewSet, "ingredients")
+router.register("recipes", RecipeViewSet, "recipes")
+router.register("users", UserViewSet, "users")
+
+urlpatterns = (
+    path("", include(router.urls)),
+    path("auth/", include("djoser.urls.authtoken")),
+)

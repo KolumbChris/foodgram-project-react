@@ -1,139 +1,222 @@
+"""Модуль для создания, настройки и управления моделью пользователей.
+
+Задаёт модели и методы для настроийки и управления пользователями
+приложения `Foodgram`. Модель пользователя основана на модели
+AbstractUser из Django для переопределения полей обязательных для заполнения.
 """
-Модуль управления пользователями.
-"""
+import unicodedata
+
+from core import texsts
+from core.enums import Limits
+from core.validators import MinLenValidator, OneOfTwoValidator
 from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.db.models import Q, F
+from django.db.models import (
+    CASCADE,
+    BooleanField,
+    CharField,
+    CheckConstraint,
+    DateTimeField,
+    EmailField,
+    F,
+    ForeignKey,
+    Model,
+    Q,
+    UniqueConstraint,
+)
+from django.db.models.functions import Length
+from django.utils.translation import gettext_lazy as _
 
-from foodgram_backend import constants
+CharField.register_lookup(Length)
 
 
-class CustomUser(AbstractUser):
+class MyUser(AbstractUser):
+    """Настроенная под приложение `Foodgram` модель пользователя.
+
+    При создании пользователя все поля обязательны для заполнения.
+
+    Attributes:
+        email(str):
+            Адрес email пользователя.
+            Проверка формата производится внутри Django.
+            Установлено ограничение по максимальной длине.
+        username(str):
+            Юзернейм пользователя.
+            Установлены ограничения по минимальной и максимальной длине.
+            Для ввода разрешены только буквы.
+        first_name(str):
+            Реальное имя пользователя.
+            Установлено ограничение по максимальной длине.
+        last_name(str):
+            Реальная фамилия пользователя.
+            Установлено ограничение по максимальной длине.
+        password(str):
+            Пароль для авторизации.
+            Внутри Django проходит хэш-функцию с добавлением
+            `соли` settings.SECRET_KEY.
+            Хранится в зашифрованном виде.
+            Установлено ограничение по максимальной длине.
+        is_active (bool):
+            Активен или заблокирован пользователь.
     """
-    Модель пользователя.
 
-    Атрибуты:
-    ---------
-    first_name : str
-        Имя пользователя.
-    last_name : str
-        фамилия пользователя.
-    username : str
-        Имя пользователя для входа.
-    email : str
-        Адрес электронной почты пользователя.
-    пароль : str
-        Пароль пользователя.
-
-    Мета:
-    -----
-        verbose_name (str): удобочитаемое имя модели.
-        порядок (список): порядок модели по умолчанию.
-
-    Методы:
-    -------
-    __str__(): возвращает имя пользователя в виде строки.
-    """
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
-    first_name = models.CharField(
-        max_length=constants.FIRST_NAME_MAX_LENGTH,
-        verbose_name='Имя',
-        help_text='Введите имя пользователя'
-    )
-    last_name = models.CharField(
-        max_length=constants.LAST_NAME_MAX_LENGTH,
-        verbose_name='Фамилия',
-        help_text='Введите фамилию пользователя'
-    )
-    username = models.CharField(
-        max_length=constants.USERNAME_MAX_LENGTH,
+    email = EmailField(
+        verbose_name="Адрес электронной почты",
+        max_length=Limits.MAX_LEN_EMAIL_FIELD.value,
         unique=True,
-        verbose_name='Логин',
-        help_text='Введите логин пользователя',
-        validators=[
-            UnicodeUsernameValidator()
-        ],
+        help_text=texsts.USERS_HELP_EMAIL,
     )
-    email = models.EmailField(
+    username = CharField(
+        verbose_name="Уникальный юзернейм",
+        max_length=Limits.MAX_LEN_USERS_CHARFIELD.value,
         unique=True,
-        verbose_name='E-mail',
-        help_text='Введите email пользователя'
-    )
-    password = models.CharField(
-        max_length=constants.PASSWORD_MAX_LENGTH,
-        verbose_name='Пароль',
-        help_text='Введите пароль пользователя',
-    )
-
-    class Meta:
-        """Класс Meta модели User."""
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-        ordering = ['username']
-
-    def __str__(self):
-        return self.username
-
-
-class Subscription(models.Model):
-    """
-    Представляет подписку между подписчиком и автором.
-    Модель M2M.
-
-    Атрибуты:
-    ---------
-    user : CustomUser
-        Пользователь-подписчик.
-    автор : CustomUser
-        Пользователь-автор.
-
-    Мета:
-    -----
-    verbose_name (str): удобочитаемое имя модели.
-    порядок (список): порядок модели по умолчанию.
-    ограничения (список): ограничения модели.
-
-    Методы:
-    -------
-    __str__(): возвращает строковое представление подписки.
-    """
-    user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Кто подписан на автора'
-    )
-    following = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='На кого подписан автор',
-    )
-
-    class Meta:
-        """Класс Meta модели Subscription."""
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        ordering = ['user']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'following'],
-                name='unique_subscription_fields',
-                violation_error_message=(
-                    {'subscription': 'Уже подписан.'}
-                )
+        help_text=texsts.USERS_HELP_UNAME,
+        validators=(
+            MinLenValidator(
+                min_len=Limits.MIN_LEN_USERNAME,
+                field="username",
             ),
-            models.CheckConstraint(
-                check=~Q(user=F('following')),
-                name='self_subscription',
-                violation_error_message=(
-                    {'subscription': 'Нельзя подписаться на себя.'}
-                )
-            )
-        ]
+            OneOfTwoValidator(field="username"),
+        ),
+    )
+    first_name = CharField(
+        verbose_name="Имя",
+        max_length=Limits.MAX_LEN_USERS_CHARFIELD.value,
+        help_text=texsts.USERS_HELP_FNAME,
+        validators=(
+            OneOfTwoValidator(
+                first_regex="[^а-яёА-ЯЁ -]+",
+                second_regex="[^a-zA-Z -]+",
+                field="Имя",
+            ),
+        ),
+    )
+    last_name = CharField(
+        verbose_name="Фамилия",
+        max_length=Limits.MAX_LEN_USERS_CHARFIELD.value,
+        help_text=texsts.USERS_HELP_FNAME,
+        validators=(
+            OneOfTwoValidator(
+                first_regex="[^а-яёА-ЯЁ -]+",
+                second_regex="[^a-zA-Z -]+",
+                field="Фамилия",
+            ),
+        ),
+    )
+    password = CharField(
+        verbose_name=_("Пароль"),
+        max_length=128,
+        help_text=texsts.USERS_HELP_FNAME,
+    )
+    is_active = BooleanField(
+        verbose_name="Активирован",
+        default=True,
+    )
 
-    def __str__(self):
-        return f'{self.user} подписан на {self.following}'
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+        ordering = ("username",)
+        constraints = (
+            CheckConstraint(
+                check=Q(username__length__gte=Limits.MIN_LEN_USERNAME.value),
+                name="\nusername is too short\n",
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.username}: {self.email}"
+
+    @classmethod
+    def normalize_email(cls, email: str) -> str:
+        """Normalize the email address by lowercasing the domain part of it."""
+        email = email or ""
+        try:
+            email_name, domain_part = email.strip().rsplit("@", 1)
+        except ValueError:
+            pass
+        else:
+            email = email_name.lower() + "@" + domain_part.lower()
+        return email
+
+    @classmethod
+    def normalize_username(cls, username: str) -> str:
+        return unicodedata.normalize("NFKC", username).capitalize()
+
+    def __normalize_human_names(self, name: str) -> str:
+        """Нормализует имена и фамилии. Например:
+        - Эрих Мария Ремарк
+        - Крестово-Воздвиженский
+
+        Args:
+            name (str): Проверяемое имя.
+        Returns:
+            str: Нормализованное имя.
+        """
+        storage = [None] * len(name)
+        title = True
+        idx = 0
+        for letter in name:
+            letter = letter.lower()
+            if title:
+                if not letter.isalpha():
+                    continue
+                else:
+                    letter = letter.upper()
+                    title = False
+            elif letter in " -":
+                title = True
+            storage[idx] = letter
+            idx += 1
+        return "".join(storage[:idx])
+
+    def clean(self) -> None:
+        self.first_name = self.__normalize_human_names(self.first_name)
+        self.last_name = self.__normalize_human_names(self.last_name)
+        return super().clean()
+
+
+class Subscriptions(Model):
+    """Подписки пользователей друг на друга.
+
+    Attributes:
+        author(int):
+            Автор рецепта. Связь через ForeignKey.
+        user(int):
+            Подписчик Связь через ForeignKey.
+        date_added(datetime):
+            Дата создания подписки.
+    """
+
+    author = ForeignKey(
+        verbose_name="Автор рецепта",
+        related_name="subscribers",
+        to=MyUser,
+        on_delete=CASCADE,
+    )
+    user = ForeignKey(
+        verbose_name="Подписчики",
+        related_name="subscriptions",
+        to=MyUser,
+        on_delete=CASCADE,
+    )
+    date_added = DateTimeField(
+        verbose_name="Дата создания подписки",
+        auto_now_add=True,
+        editable=False,
+    )
+
+    class Meta:
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
+        constraints = (
+            UniqueConstraint(
+                fields=("author", "user"),
+                name="\nRepeat subscription\n",
+            ),
+            CheckConstraint(
+                check=~Q(author=F("user")), name="\nNo self sibscription\n"
+            ),
+        )
+
+    def __str__(self) -> str:
+        return f"{self.user.username} -> {self.author.username}"
