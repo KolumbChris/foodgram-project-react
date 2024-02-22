@@ -130,5 +130,6 @@ dmypy.json
 
 # .idea
 .idea
-/infra/foodgramproject.crt
-/infra/foodgramproject.key
+media/
+static/
+.vscode/
