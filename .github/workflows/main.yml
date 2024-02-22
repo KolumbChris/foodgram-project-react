@@ -12,41 +12,26 @@
       steps:
       - uses: actions/checkout@v2
   
+      # Add SSH key to the SSH agent
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
   
+      # Create projects directory using SSH (Notice no key or passphrase needed here)
       - name: Create projects directory
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          script: |
-            cd projects && mkdir -p foodgram && mkdir -p foodgram/docs
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} "cd projects && mkdir -p foodgram && mkdir -p foodgram/docs"
   
+      # Copy infra files
       - name: Copy infra files
-        uses: appleboy/scp-action@master
-        with:
-            local: infra/
-            remote: /${{ secrets.USER }}/projects/foodgram/
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USER }}
-            privateKey: ${{ secrets.PRIVATE_KEY }}
-            passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        run: |
+          scp -r infra/ ${{ secrets.USER }}@${{ secrets.HOST }}:/home/${{ secrets.USER }}/projects/foodgram/
   
+      # Copy docs
       - name: Copy docs
-        uses: appleboy/scp-action@master
-        with:
-            local: docs
-            remote: /${{ secrets.USER }}/projects/foodgram/docs/
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USER }}
-            privateKey: ${{ secrets.PRIVATE_KEY }}
-            passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        run: |
+          scp -r docs ${{ secrets.USER }}@${{ secrets.HOST }}:/home/${{ secrets.USER }}/projects/foodgram/docs/
   
     build_push_backend_to_DockerHub:
       name: Building back image and pushing it to Docker Hub
