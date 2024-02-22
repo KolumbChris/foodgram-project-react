@@ -16,7 +16,7 @@
         - name: Setup SSH Agent for infra and docs deployment
           uses: webfactory/ssh-agent@v0.5.3
           with:
-            ssh-private-key: ${{ secrets.PRIVATE_KEY }}
+            ssh-private-key: ${{ secrets.SSH_KEY }}
     
         - name: Prepare projects directory
           uses: appleboy/ssh-action@master
