@@ -1,145 +1,181 @@
-# FoodGram
+<!---Результат тестирования-->
+![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
-## Описание
-«Фудграм» — это сайт, на котором можно публиковать собственные рецепты, добавлять чужие рецепты в избранное, подписываться на других авторов и создавать список покупок для заданных блюд.
-Вот, что было сделано в ходе работы над проектом:
-- настроено взаимодействие Python-приложения с внешними API-сервисами;
-- создан собственный API-сервис на базе проекта Django;
-- подключено SPA к бэкенду на Django через API;
-- созданы образы и запущены контейнеры Docker;
-- созданы, развёрнуты и запущены на сервере мультиконтейнерные приложения;
-- закреплены на практике основы DevOps, включая CI&CD.
+***
+# Foodgram [Яндекс Практикум](https://practicum.yandex.ru/)
 
-**Инструменты и стек:** #python #JSON #YAML #Django #React #Telegram #API #Docker #Nginx #PostgreSQL #Gunicorn #JWT #Postman #Djoser #PyJWT #Pillow
+## Описание проекта
+«Фудграм» — это сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта также  доступен сервис «Список покупок». Он позволит создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
-## Запуск приложения в контейнере на сервере
-1. На сервере создайте директорию для приложения:
-    ```bash
-    mkdir foodgram/infra
-    ```
-2. В папку _infra_ скопируйте файлы `docker-compose.production.yml`, `nginx.production.conf`.
-3. Там же создайте файл `.env` со следующими переменными:
-   ```
-   SECRET_KEY=... # секретный ключ django-проекта
-   DEBUG=False
-   ALLOWED_HOSTS=... # IP/домен хоста, БД (указывается через запятую без пробелов)
-   DB_ENGINE=django.db.backends.postgresql # работаем с БД postgresql
-   DB_NAME=db.postgres # имя БД
-   POSTGRES_USER=... # имя пользователя БД
-   POSTGRES_PASSWORD=... # пароль от БД
-   DB_HOST=db
-   DB_PORT=5432
-   ```
-4. В соответствии с `ALLOWED_HOSTS` измените `nginx.production.conf`.
-5. Подключаем ssl сертификат для домена. Для это скачиваем certbot и получаем сертификат:
-   ```bash
-   sudo snap install --classic certbot
-   sudo ln -s /snap/bin/certbot /usr/bin/certbot
-   sudo certbot --nginx
-   sudo certbot renew --dry-run
-   ```
-6. Теперь соберем и запустим контейнер:
-   ```bash
-   sudo docker compose up --build
-   ```
-7. В новом окне терминала создадим супер пользователя:
-   ```bash
-   docker compose exec backend python manage.py createsuperuser
-   ```
+![](https://pictures.s3.yandex.net/resources/S16_01_1692340098.png)
 
-## Инфраструктура проекта
-**Главная** - https://localhost/recipes/ \
-**API** - https://localhost/api/ \
-**Redoc** - https://localhost/api/docs/ \
-**Админка** -https://localhost/admin/
+## Инструкция по развертыванию
+Проект собран в docker образы и загружен в [dockerhub](https://hub.docker.com/)
 
-## Примеры запросов
-1. Получение списка рецептов: \
-   **GET** `/api/recipes/` \
-   REQUEST
-   ```json
-   {
-     "count": 123,
-     "next": "http://127.0.0.1:8000/api/recipes/?page=2",
-     "previous": "http://127.0.0.1:8000/api/recipes/?page=1",
-     "results": [
-       {
-         "id": 0,
-         "tags": [
-           {
-             "id": 0,
-             "name": "Завтрак",
-             "color": "green",
-             "slug": "breakfast"
-           }
-         ],
-         "author": {
-           "email": "ya@ya.ru",
-           "id": 0,
-           "username": "user",
-           "first_name": "Ivan",
-           "last_name": "Zivan",
-           "is_subscribed": false
-         },
-         "ingredients": [
-           {
-             "id": 0,
-             "name": "Курица",
-             "measurement_unit": "г",
-             "amount": 100
-           }
-         ],
-         "is_favorited": false,
-         "is_in_shopping_cart": false,
-         "name": "string",
-         "image": "https://backend:8080/media/recipes/images/image.jpeg",
-         "text": "string",
-         "cooking_time": 10
-       }
-     ]
-   }
-   ```
-2. Регистрация пользователя: \
-   **POST** `/api/users/` \
-   RESPONSE
-   ```json
-   {
-     "email": "ya@ya.ru",
-     "username": "user",
-     "first_name": "Ivan",
-     "last_name": "Zivan",
-     "password": "super_password1"
-   }
-   ```
-   REQUEST
-   ```json
-   {
-   "email": "ya@ya.ru",
-   "id": 0,
-   "username": "user",
-   "first_name": "Ivan",
-   "last_name": "Zivan"
-   }
-   ```
-3. Подписаться на пользователя: \
-   **POST** `/api/users/{id}/subscribe/`
-   REQUEST
-   ```json
-   {
-     "email": "user@example.com",
-     "id": 0,
-     "username": "user",
-     "first_name": "Ivan",
-     "last_name": "Zivan",
-     "is_subscribed": true,
-     "recipes": [
-       {
-         "id": 0,
-         "name": "string",
-         "image": "https://backend:8080/media/recipes/images/image.jpeg",
-         "cooking_time": 10
-       }
-     ],
-     "recipes_count": 1
-   }
-   ```
+
+```
+
+Создайте виртуальное окружение
+
+```bash
+python -m venv .venv
+```
+
+Активируйте виртуальное окружение
+
+```bash
+source .venv/bin/activate
+```
+
+Установите библиотеки python
+
+```bash
+pip install --upgrade pip && pip install -r requirements.txt
+```
+
+Выполните миграцию базы данных
+
+```bash
+python3 python3 manage.py migrate
+```
+
+Создайте суперпользователя
+
+```bash
+python3 manage.py createsuperuser
+```
+
+Заполните базу данных
+
+```bash
+python3 manage.py load_tags && \
+python3 manage.py load_ingredients
+```
+
+Запустите проект
+
+```bash
+python3 manage.py runserver 127.0.0.1:8000
+```
+
+### Запуск проекта в docker
+Установите [docker](https://docs.docker.com/engine/install/)
+
+Для развертвания на сервере используйте `docker-compose.production.yml`
+```yaml
+version: '3.3'
+volumes:
+  pg_data:
+  static:
+  media:
+services:
+  db:
+    image: postgres
+    restart: always
+    env_file: .env.example
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  backend:
+    image: dmitriy1223/foodgram_backend
+    depends_on:
+      - db
+    env_file: .env.example
+    volumes:
+      - static:/static_backend
+      - media:/media_files
+  nginx:
+    image: dmitriy1223/foodgram_gateway
+    ports:
+      - "9000:80"
+    volumes:
+      - media:/media_files
+      - static:/static_backend
+```
+
+Создайте файл переменных `.env.example`
+```bash
+DJANGO_SECRET_KEY=Секретный_ключ
+DJANGO_SERVER_TYPE=prod
+DJANGO_ALLOWED_HOSTS=127.0.0.1,locahost
+POSTGRES_USER=django_user
+POSTGRES_PASSWORD=Пароль
+POSTGRES_DB=django
+DB_HOST=db
+DB_PORT=5432
+```
+
+Запустите проект:
+```bash
+docker compose -f docker-compose.yml up -d
+```
+
+Настройте проект:
+
+```bash
+sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py migrate
+sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py load_ingredients
+sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py load_tags
+sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py collectstatic
+```
+
+### Доступные эндпоинты
+* [IP адрес или домен] - главная страница проекта
+* [IP адрес или домен]/admin/ - страница администратора(суперпользователя)
+
+## Стэк технологий
+Проект реализован по методологии REST API.
+
+* **Бэкэнд**: Django + gunicorn
+* **Фронтэнд**: React
+* **База данных**: PosgreSQL
+* **Статика**: nginх
+
+## Документация
+Документация сделана с использованием Redoc на основе описания OpenAPI.
+
+Доступна по ссылке `[site]/api/docs` после запуска проекта.
+
+## Пример запросов и ответов
+Пример запроса списка пользователей:
+```
+[GET] http://localhost/api/users/
+```
+
+Пример ответа:
+```json
+{
+  "count": 123,
+  "next": "http://foodgram.example.org/api/users/?page=4",
+  "previous": "http://foodgram.example.org/api/users/?page=2",
+  "results": [
+    {
+      "email": "user@example.com",
+      "id": 0,
+      "username": "string",
+      "first_name": "Вася",
+      "last_name": "Пупкин",
+      "is_subscribed": false
+    }
+  ]
+}
+```
+
+Запрос на лобавление рецепта в избранное:
+```
+[POST] http://localhost/api/recipes/{id}/favorite/
+```
+
+Ответ:
+```json
+{
+"id": 0,
+"name": "string",
+"image": "http://foodgram.example.org/media/recipes/images/image.jpeg",
+"cooking_time": 1
+}
+```

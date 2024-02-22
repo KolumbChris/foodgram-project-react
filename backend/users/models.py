@@ -1,106 +1,139 @@
-# users/models.py
+"""
+Модуль управления пользователями.
+"""
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db.models import Q, F
+
+from foodgram_backend import constants
 
 
 class CustomUser(AbstractUser):
-    """Модель переопределенного пользователя"""
-    USER = 'user'
-    ADMIN = 'admin'
+    """
+    Модель пользователя.
 
-    CHOICES_ROLE = (
-        (USER, 'Пользователь'),
-        (ADMIN, 'Администратор')
-    )
+    Атрибуты:
+    ---------
+    first_name : str
+        Имя пользователя.
+    last_name : str
+        фамилия пользователя.
+    username : str
+        Имя пользователя для входа.
+    email : str
+        Адрес электронной почты пользователя.
+    пароль : str
+        Пароль пользователя.
 
-    username = models.CharField(
-        verbose_name=_('Логин'),
-        max_length=150,
-        unique=True,
-        blank=False
-    )
-    email = models.EmailField(
-        verbose_name='E-mail',
-        max_length=254,
-        unique=True,
-        blank=False
-    )
+    Мета:
+    -----
+        verbose_name (str): удобочитаемое имя модели.
+        порядок (список): порядок модели по умолчанию.
+
+    Методы:
+    -------
+    __str__(): возвращает имя пользователя в виде строки.
+    """
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
     first_name = models.CharField(
-        verbose_name=_('Имя'),
-        max_length=150,
-        blank=False
+        max_length=constants.FIRST_NAME_MAX_LENGTH,
+        verbose_name='Имя',
+        help_text='Введите имя пользователя'
     )
     last_name = models.CharField(
-        verbose_name=_('Фамилия'),
-        max_length=150,
-        blank=False
+        max_length=constants.LAST_NAME_MAX_LENGTH,
+        verbose_name='Фамилия',
+        help_text='Введите фамилию пользователя'
     )
-    is_subscribed = models.BooleanField(
-        verbose_name=_('Подписаться на автора'),
-        blank=True,
-        default=False,
+    username = models.CharField(
+        max_length=constants.USERNAME_MAX_LENGTH,
+        unique=True,
+        verbose_name='Логин',
+        help_text='Введите логин пользователя',
+        validators=[
+            UnicodeUsernameValidator()
+        ],
+    )
+    email = models.EmailField(
+        unique=True,
+        verbose_name='E-mail',
+        help_text='Введите email пользователя'
     )
     password = models.CharField(
-        verbose_name=_('Пароль'),
-        max_length=150,
-        blank=False,
-    )
-    role = models.CharField(
-        verbose_name=_('Роль пользователя'),
-        max_length=32,
-        default=USER,
-        choices=CHOICES_ROLE
-    )
-    following = models.ManyToManyField(
-        "self",
-        through='Subscription',
-        through_fields=('user', 'author'),
-        symmetrical=False,
-        related_name='following_relationships'
+        max_length=constants.PASSWORD_MAX_LENGTH,
+        verbose_name='Пароль',
+        help_text='Введите пароль пользователя',
     )
 
     class Meta:
-        verbose_name = _('Пользователь')
-        verbose_name_plural = _('Пользователи')
-        ordering = ('id',)
-
-    @property
-    def is_user(self):
-        return self.role == self.USER
-
-    @property
-    def is_admin(self):
-        return self.role == self.ADMIN or self.is_superuser or self.is_staff
+        """Класс Meta модели User."""
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ['username']
 
     def __str__(self):
-        return self.email
+        return self.username
 
 
 class Subscription(models.Model):
-    """Модель подписок"""
+    """
+    Представляет подписку между подписчиком и автором.
+    Модель M2M.
+
+    Атрибуты:
+    ---------
+    user : CustomUser
+        Пользователь-подписчик.
+    автор : CustomUser
+        Пользователь-автор.
+
+    Мета:
+    -----
+    verbose_name (str): удобочитаемое имя модели.
+    порядок (список): порядок модели по умолчанию.
+    ограничения (список): ограничения модели.
+
+    Методы:
+    -------
+    __str__(): возвращает строковое представление подписки.
+    """
     user = models.ForeignKey(
         CustomUser,
-        verbose_name=_('Подписчик'),
         on_delete=models.CASCADE,
-        related_name='subscribers'
+        related_name='follower',
+        verbose_name='Кто подписан на автора'
     )
-    author = models.ForeignKey(
+    following = models.ForeignKey(
         CustomUser,
-        verbose_name=_('Автор'),
         on_delete=models.CASCADE,
-        related_name='followed_by'
+        related_name='following',
+        verbose_name='На кого подписан автор',
     )
 
     class Meta:
-        verbose_name = _('Подписчик')
-        verbose_name_plural = _('Подписчики')
-        ordering = ('id',)
+        """Класс Meta модели Subscription."""
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        ordering = ['user']
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_subscripting'
+                fields=['user', 'following'],
+                name='unique_subscription_fields',
+                violation_error_message=(
+                    {'subscription': 'Уже подписан.'}
+                )
             ),
+            models.CheckConstraint(
+                check=~Q(user=F('following')),
+                name='self_subscription',
+                violation_error_message=(
+                    {'subscription': 'Нельзя подписаться на себя.'}
+                )
+            )
         ]
 
     def __str__(self):
-        return f'{self.user} >> {self.author}'
+        return f'{self.user} подписан на {self.following}'

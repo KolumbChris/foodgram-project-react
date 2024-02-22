@@ -1,46 +1,86 @@
+"""
+Настойки интерфейса панели администратора.
+"""
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import TokenProxy
+from django.contrib.auth.forms import UserCreationForm
 
 from .models import CustomUser, Subscription
 
 
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+
+
+class SubscriptionOnInline(admin.StackedInline):
+    model = Subscription
+    fk_name = 'user'
+
+
+class SubscriptionInline(admin.StackedInline):
+    model = Subscription
+    fk_name = 'following'
+
+
 @admin.register(CustomUser)
-class UserAdmin(admin.ModelAdmin):
-    """Админ-модель пользователей"""
+class CustomUserAdmin(UserAdmin):
+    """Регистрация юзера."""
+    model = CustomUser
+    add_form = UserCreationForm
+
     list_display = (
-        'pk',
+        'id',
+        'email',
+        'username',
+        'first_name',
+        'last_name',
+        'is_staff',
+    )
+    list_filter = (
+        'email',
+        'username',
+    )
+    search_fields = (
         'username',
         'email',
         'first_name',
-        'last_name',
-        'role'
-    )
-    list_display_links = ('username',)
-    search_fields = ('username',)
-    list_filter = ('role',)
-    list_editable = (
-        'email',
-        'role',
-        'first_name',
         'last_name'
     )
-    list_fields = ('first_name',)
-    empty_value_display = '-пусто-'
+    fieldsets = (
+        (None, {'fields': (
+            'email', 'username', 'first_name', 'last_name', 'password',
+        )}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',)})
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'email', 'username', 'first_name', 'last_name', 'password1',
+                'password2', 'is_active', 'is_staff', 'is_superuser',
+            )
+        }),
+    )
+    inlines = [SubscriptionOnInline, SubscriptionInline]
 
 
 @admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    """Админ-модель подписок"""
+class FollowAdmin(admin.ModelAdmin):
+    """Регистрация подписчика."""
     list_display = (
-        'pk',
         'user',
-        'author'
+        'following',
     )
     search_fields = (
         'user',
-        'author'
+        'following',
     )
-    list_editable = (
-        'user',
-        'author'
-    )
-    empty_value_display = '-пусто-'
+
+
+admin.site.site_header = 'Администрирование Foodgram'
+admin.site.unregister(Group)
+admin.site.unregister(TokenProxy)
