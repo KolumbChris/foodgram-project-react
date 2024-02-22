@@ -1,37 +1,46 @@
-from django.contrib.admin import register
-from django.contrib.auth.admin import UserAdmin
-from users.models import MyUser
+from django.contrib import admin
+
+from .models import CustomUser, Subscription
 
 
-@register(MyUser)
-class MyUserAdmin(UserAdmin):
+@admin.register(CustomUser)
+class UserAdmin(admin.ModelAdmin):
+    """Админ-модель пользователей"""
     list_display = (
-        "is_active",
-        "username",
-        "first_name",
-        "last_name",
-        "email",
+        'pk',
+        'username',
+        'email',
+        'first_name',
+        'last_name',
+        'role'
     )
-    fields = (
-        ("is_active",),
-        (
-            "username",
-            "email",
-        ),
-        (
-            "first_name",
-            "last_name",
-        ),
+    list_display_links = ('username',)
+    search_fields = ('username',)
+    list_filter = ('role',)
+    list_editable = (
+        'email',
+        'role',
+        'first_name',
+        'last_name'
     )
-    fieldsets = []
+    list_fields = ('first_name',)
+    empty_value_display = '-пусто-'
 
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    """Админ-модель подписок"""
+    list_display = (
+        'pk',
+        'user',
+        'author'
+    )
     search_fields = (
-        "username",
-        "email",
+        'user',
+        'author'
     )
-    list_filter = (
-        "is_active",
-        "first_name",
-        "email",
+    list_editable = (
+        'user',
+        'author'
     )
-    save_on_top = True
+    empty_value_display = '-пусто-'
