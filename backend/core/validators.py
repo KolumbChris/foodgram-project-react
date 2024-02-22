@@ -2,7 +2,7 @@
 """
 from re import compile
 from string import hexdigits
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union, List, Dict
 
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
@@ -44,9 +44,9 @@ class OneOfTwoValidator:
 
     def __init__(
         self,
-        first_regex: str | None = None,
-        second_regex: str | None = None,
-        field: str | None = None,
+        first_regex: Union[str, None] = None,
+        second_regex: Union[str, None] = None,
+        field: Union[str, None] = None,
     ) -> None:
         if first_regex is not None:
             self.first_regex = first_regex
@@ -88,9 +88,9 @@ class MinLenValidator:
 
     def __init__(
         self,
-        min_len: int | None = None,
-        field: str | None = None,
-        message: str | None = None,
+        min_len: Union[int, None] = None,
+        field: Union[str, None] = None,
+        message: Union[str, None] = None,
     ) -> None:
         if min_len is not None:
             self.min_len = min_len
@@ -132,7 +132,7 @@ def hex_color_validator(color: str) -> str:
     return "#" + color.upper()
 
 
-def tags_exist_validator(tags_ids: list[int | str], Tag: "Tag") -> list["Tag"]:
+def tags_exist_validator(tags_ids: List[Union[int, str]], Tag: "Tag") -> List["Tag"]:
     """Проверяет наличие тэгов с указанными id.
 
     Args:
@@ -154,7 +154,7 @@ def tags_exist_validator(tags_ids: list[int | str], Tag: "Tag") -> list["Tag"]:
 
 
 def ingredients_validator(
-    ingredients: list[dict[str, str | int]],
+    ingredients: List[Dict[str, Union[str, int]]],
     Ingredient: "Ingredient",
 ) -> dict[int, tuple["Ingredient", int]]:
     """Проверяет список ингридиентов.
