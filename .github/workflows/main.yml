@@ -43,7 +43,7 @@
             remote: /${{ secrets.USER }}/projects/foodgram/docs/
             host: ${{ secrets.HOST }}
             username: ${{ secrets.USER }}
-            privateKey: ${{ secrets.PRIVATE_KEY }
+            privateKey: ${{ secrets.PRIVATE_KEY }}
             
   
     build_push_backend_to_DockerHub:
