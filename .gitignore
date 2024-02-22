@@ -130,13 +130,5 @@ dmypy.json
 
 # .idea
 .idea
-
-# js React
-frontend/build/
-frontend/node_modules/
-
-# VS Code
-.vscode/
-
-# Media
-backend/ media/
+/infra/foodgramproject.crt
+/infra/foodgramproject.key
